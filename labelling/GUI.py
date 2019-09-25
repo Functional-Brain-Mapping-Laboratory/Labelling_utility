@@ -113,3 +113,11 @@ class LabelsDialog(QDialog):
         output_path = self.output_directory
         subject_directory = self.subject_directory
         run_classifier_pipeline(subjects, atlas, subject_directory, output_path)
+
+
+if __name__ == '__main__':
+    subject_directory = get_default_subject_dir()
+    app = QApplication(sys.argv)
+    LabelsDialog = LabelsDialog(subject_directory=subject_directory)
+    LabelsDialog.show()
+    sys.exit(app.exec_())
