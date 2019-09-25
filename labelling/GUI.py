@@ -41,7 +41,6 @@ class LabelsDialog(QDialog):
         grid.addWidget(QLabel('Subject:'), 1, 0)
         self.QComboBox_subject = QListWidget()
         self.set_subjects()
-        self.QComboBox_subject.insertItems(0, self.subjects)
         self.QComboBox_subject.setSelectionMode(QListWidget.ExtendedSelection)
         grid.addWidget(self.QComboBox_subject, 1, 1, 1, 3)
         # atlas
