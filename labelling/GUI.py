@@ -5,7 +5,7 @@ import os
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QGridLayout, QLabel,
                              QSpinBox, QComboBox, QDialogButtonBox, QCheckBox,
                              QApplication, QFileDialog, QLineEdit, QListWidget,
-                             QPushButton, QErrorMessage)
+                             QPushButton, QErrorMessage, QMessageBox)
 from PyQt5.QtCore import Qt, pyqtSlot
 
 from pipeline import run_classifier_pipeline
