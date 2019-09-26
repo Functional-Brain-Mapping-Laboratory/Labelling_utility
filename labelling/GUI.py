@@ -11,8 +11,6 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from pipeline import run_classifier_pipeline
 
 
-os.environ['QT_DEBUG_PLUGINS'] = "1"
-
 def get_default_subject_dir():
     import os
     env_var = os.environ
