@@ -5,7 +5,7 @@ import os
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QGridLayout, QLabel,
                              QSpinBox, QComboBox, QDialogButtonBox, QCheckBox,
                              QApplication, QFileDialog, QLineEdit, QListWidget,
-                             QPushButton)
+                             QPushButton, QErrorMessage)
 from PyQt5.QtCore import Qt, pyqtSlot
 
 from pipeline import run_classifier_pipeline
@@ -23,7 +23,7 @@ def get_default_subject_dir():
 
 
 class LabelsDialog(QDialog):
-    def __init__(self, parent=None, subject_directory=None):
+    def __init__(self, parent=None, subject_directory=None, QApplication=None):
         super().__init__(parent)
         self.setWindowTitle('Label Toolbox')
         vbox = QVBoxLayout(self)
@@ -59,10 +59,19 @@ class LabelsDialog(QDialog):
         self.QPushButton_open_output_dir = QPushButton('Open')
         self.QPushButton_open_output_dir.clicked.connect(self.open_output_directory)
         grid.addWidget(self.QPushButton_open_output_dir, 3, 3)
+        # performance
+        grid.addWidget(QLabel('n_procs:'), 4, 0)
+        self.QLineEdit_output_dir = QLineEdit()
+        self.max_cpus = os.cpu_count()
+        self.QSpinBox_n_cpus = QSpinBox()
+        self.QSpinBox_n_cpus.setMinimum(1)
+        self.QSpinBox_n_cpus.setMaximum(self.max_cpus)
+        self.QSpinBox_n_cpus.setValue(self.max_cpus)
+        grid.addWidget(self.QSpinBox_n_cpus, 4, 1)
         # run
         self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok |
                                           QDialogButtonBox.Cancel)
-        grid.addWidget(self.buttonbox, 4, 1, 1, 4)
+        grid.addWidget(self.buttonbox, 5, 1, 1, 4)
         self.buttonbox.accepted.connect(self.run_pipeline)
         self.buttonbox.rejected.connect(self.reject)
         vbox.addLayout(grid)
@@ -111,12 +120,26 @@ class LabelsDialog(QDialog):
         atlas = [item.data(0) for item in self.QListWidget_atlas.selectedItems()]
         output_path = self.output_directory
         subject_directory = self.subject_directory
-        run_classifier_pipeline(subjects, atlas, subject_directory, output_path)
+        n_cpus = self.QSpinBox_n_cpus.value()
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            run_classifier_pipeline(subjects, atlas,
+                                    subject_directory, output_path,
+                                    n_procs=n_cpus)
+            QApplication.restoreOverrideCursor()
+            self.QMessageBox_finnish = QMessageBox()
+            self.QMessageBox_finnish.showMessage('Finnished')
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.QErrorMessage = QErrorMessage()
+            self.QErrorMessage.showMessage(str(e))
+
 
 
 if __name__ == '__main__':
     subject_directory = get_default_subject_dir()
     app = QApplication(sys.argv)
-    LabelsDialog = LabelsDialog(subject_directory=subject_directory)
+    LabelsDialog = LabelsDialog(subject_directory=subject_directory,
+                                QApplication=app)
     LabelsDialog.show()
     sys.exit(app.exec_())
