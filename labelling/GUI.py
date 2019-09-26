@@ -128,7 +128,9 @@ class LabelsDialog(QDialog):
                                     n_procs=n_cpus)
             QApplication.restoreOverrideCursor()
             self.QMessageBox_finnish = QMessageBox()
-            self.QMessageBox_finnish.showMessage('Finnished')
+            self.QMessageBox_finnish.setWindowTitle("Finished")
+            self.QMessageBox_finnish.setText("Pipeline ran without errors.")
+            self.QMessageBox_finnish.exec_()
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.QErrorMessage = QErrorMessage()
