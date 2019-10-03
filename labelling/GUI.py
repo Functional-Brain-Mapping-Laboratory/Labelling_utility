@@ -137,7 +137,6 @@ class LabelsDialog(QDialog):
             self.QErrorMessage.showMessage(str(e))
 
 
-
 if __name__ == '__main__':
     subject_directory = get_default_subject_dir()
     app = QApplication(sys.argv)
