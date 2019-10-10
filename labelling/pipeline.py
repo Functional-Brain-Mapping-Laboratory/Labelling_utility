@@ -83,7 +83,7 @@ def convert_for_cartool(img, LUT):
                                                                      elem[3],
                                                                      elem[4],
                                                                      elem[5]))
-    return (new_img_name, table_name)
+    return (new_img_name, lut_name)
 
 
 def run_classifier_pipeline(subjects, atlas,
