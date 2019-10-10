@@ -30,11 +30,15 @@ def convert_for_cartool(img, LUT):
     import csv
     import nibabel
     import numpy as np
-    # Loads Files
+    from datetime import datetime
+    # Get current date time
+    now = datetime.now()
+    dt = now.strftime("%d/%m/%Y %H:%M:%S")
+    # Load LUT
     dtype = [('id', '<i8'), ('name', 'U47'),
              ('R', '<i8'), ('G', '<i8'), ('B', '<i8'), ('A', '<i8')]
     LUT = np.genfromtxt(LUT, dtype=dtype)
-
+    # Load MRI
     mri = nibabel.load(img)
     data = mri.get_data()
     # Assign each labels to a new indice.
@@ -43,22 +47,42 @@ def convert_for_cartool(img, LUT):
     if len(uniques) > 255:
         raise ValueError(f'Found {len(uniques)} uniques labels '
                          f'but Cartool can only handle 255.')
-    Table = []
+    individual_lut = []
     for i, num in enumerate(uniques):
         try:
-            indix_name = str(LUT[np.where(LUT['id'] == num)[0]]['name'][0])
+            name = str(LUT[np.where(LUT['id'] == num)[0]]['name'][0])
+            R = (LUT[np.where(LUT['id'] == num)[0]]['R'])[0]
+            G = (LUT[np.where(LUT['id'] == num)[0]]['G'])[0]
+            B = (LUT[np.where(LUT['id'] == num)[0]]['B'])[0]
+            A = (LUT[np.where(LUT['id'] == num)[0]]['A'])[0]
             new_data[data == num] = i
-            Table.append([i, indix_name])
+            individual_lut.append([i, name, R, G, B, A])
         except Exception as e:
             pass
+    # Save MRI
     new_img = nibabel.Nifti1Image(new_data.astype('uint8'), mri.affine)
-    table_name = os.path.splitext(img)[0] + '-table.csv'
     new_img_name = os.path.splitext(img)[0] + '-ROIs.img'
-    # Save Table
-    with open(table_name, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerows(Table)
     nibabel.save(new_img, new_img_name)
+
+    # Save individual LUT
+    lut_name = os.path.splitext(img)[0] + '_LUT.txt'
+    with open(lut_name, 'w', newline='') as f:
+        f.write(f'#$Id: {lut_name}, {new_img_name}, v 1.105, {dt} $\n\n')
+        f.write("{0:<4}{1:<40}{2:<4}{3:<4}{4:<4}{5:<4}\n\n".format(
+                                                               '#No.',
+                                                               'Label Name:',
+                                                               'R',
+                                                               'G',
+                                                               'B',
+                                                               'A'))
+        for elem in individual_lut:
+            print(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5])
+            f.write('{0:<4}{1:<40}{2:<4}{3:<4}{4:<4}{5:<4}\n'.format(elem[0],
+                                                                     elem[1],
+                                                                     elem[2],
+                                                                     elem[3],
+                                                                     elem[4],
+                                                                     elem[5]))
     return (new_img_name, table_name)
 
 
