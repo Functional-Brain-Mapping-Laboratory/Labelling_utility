@@ -327,7 +327,6 @@ def run_classifier_pipeline(subjects, atlas,
     # Run
     #workflow.write_graph(graph2use='exec')
     workflow.config['execution']['parameterize_dirs'] = False
-    workflow.base_dir = output_path
     plugin_args = {'n_procs': n_procs, 'memory_gb': memory_gb}
     workflow.run(plugin='MultiProc', plugin_args=plugin_args)
     return()

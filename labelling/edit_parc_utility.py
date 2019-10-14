@@ -119,7 +119,19 @@ class LabelsDialog(QDialog):
             self.parcellation = fname
             self.QLineEdit_parcellation.setText(self.parcellation)
             self.mri = nib.load(self.parcellation)
-            self.current_data = self.mri.get_data()
+            if self.mri.get_data().ndim == 3:
+                self.source_data = self.mri.get_data()
+            elif self.mri.get_data().ndim == 4:
+                self.source_data = self.mri.get_data()[:, :, :, 0]
+            else:
+                self.mri = None
+                self.parcellation = None
+                self.QLineEdit_parcellation.setText('')
+                self.QErrorMessage = QErrorMessage()
+                self.QErrorMessage.showMessage('Invalid parcellation file. '
+                                               'Parcellation must be a 3D or '
+                                               '4D image.')
+            self.current_data = self.source_data
             self.update_data()
         self.update_labels()
         return()
@@ -127,9 +139,18 @@ class LabelsDialog(QDialog):
     def save_parcellation(self):
         fname, _ = QFileDialog.getSaveFileName(self, "Save Parcellation")
         if fname:
-            data = self.current_data
-            img = nib.Nifti1Image(data, self.mri.affine)
-            img.to_filename(fname)
+            if fname.endswith('.img'):
+                header = nib.FileHolder(fname[:-3] + 'hdr')
+                image = nib.FileHolder(fname)
+                filemap = {'header': header,
+                           'image': image}
+                data = self.current_data.astype('uint8')
+                img = nib.AnalyzeImage(data, self.mri.affine)
+                img.to_file_map(filemap)
+            else:
+                data = self.current_data
+                img = nib.Nifti1Image(data, self.mri.affine)
+                img.to_filename(fname)
         return()
 
     def open_lut(self):
@@ -150,7 +171,7 @@ class LabelsDialog(QDialog):
 
     def update_labels(self):
         if self.lut and self.parcellation:
-            uniques_idx = np.unique(self.mri.get_data())
+            uniques_idx = np.unique(self.source_data)
             uniques_names = [str(self.data_lut[np.where(self.data_lut['id'] == i)[0]]['name'][0]) for i in uniques_idx]
             self.available_labels = uniques_names
             self.QListWidget_labels.clear()
@@ -190,7 +211,7 @@ class LabelsDialog(QDialog):
 
     def update_data(self):
         if self.lut and self.parcellation:
-            data = self.mri.get_data()
+            data = self.source_data
             self.excluded_names = [item.data(0) for item in self.QListWidget_labels.selectedItems()]
             self.excluded_indices = [self.data_lut['id'][p] for p in range (0, len(self.data_lut['name'])) if self.data_lut['name'][p] in self.excluded_names]
             for i in self.excluded_indices:

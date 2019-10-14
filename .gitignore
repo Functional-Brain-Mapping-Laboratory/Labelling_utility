@@ -58,3 +58,5 @@ docs/_build/
 
 # PyBuilder
 target/
+labelling/MRI_to_Cartool/graph.json
+labelling/MRI_to_Cartool/graph1.json
