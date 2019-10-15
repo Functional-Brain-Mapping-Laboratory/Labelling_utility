@@ -43,35 +43,35 @@ class LabelsDialog(QDialog):
         self.QListWidget_atlas.insertItems(0, self.available_atlas)
         self.QListWidget_atlas.setSelectionMode(QListWidget.ExtendedSelection)
         grid.addWidget(self.QListWidget_atlas, 2, 1, 1, 3)
+        # Choose workflow
+        self.QCheckBox_workflow = QCheckBox()
+        self.QCheckBox_workflow.setText('Convert to cartool')
+        self.QCheckBox_workflow.setChecked(True)
+        self.cartool = True
+        grid.addWidget(self.QCheckBox_workflow, 3, 1)
         # outputdir
-        grid.addWidget(QLabel('Output directory:'), 3, 0)
+        grid.addWidget(QLabel('Output directory:'), 4, 0)
         self.QLineEdit_output_dir = QLineEdit()
         self.output_directory = os.getcwd()
         self.QLineEdit_output_dir.setText(self.output_directory)
-        grid.addWidget(self.QLineEdit_output_dir, 3, 1)
+        grid.addWidget(self.QLineEdit_output_dir, 4, 1)
         self.QPushButton_open_output_dir = QPushButton('Open')
         self.QPushButton_open_output_dir.clicked.connect(
                                                    self.open_output_directory)
-        grid.addWidget(self.QPushButton_open_output_dir, 3, 3)
+        grid.addWidget(self.QPushButton_open_output_dir, 4, 3)
         # performance
-        grid.addWidget(QLabel('n_procs:'), 4, 0)
+        grid.addWidget(QLabel('n_procs:'), 5, 0)
         self.QLineEdit_output_dir = QLineEdit()
         self.max_cpus = os.cpu_count()
         self.QSpinBox_n_cpus = QSpinBox()
         self.QSpinBox_n_cpus.setMinimum(1)
         self.QSpinBox_n_cpus.setMaximum(self.max_cpus)
         self.QSpinBox_n_cpus.setValue(self.max_cpus)
-        grid.addWidget(self.QSpinBox_n_cpus, 4, 2)
-        # Choose workflow
-        self.QCheckBox_workflow = QCheckBox()
-        self.QCheckBox_workflow.setText('Convert to cartool')
-        self.QCheckBox_workflow.setChecked(True)
-        self.cartool = True
-        grid.addWidget(self.QCheckBox_workflow, 4, 1)
+        grid.addWidget(self.QSpinBox_n_cpus, 5, 1)
         # run
         self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok |
                                           QDialogButtonBox.Cancel)
-        grid.addWidget(self.buttonbox, 5, 1, 1, 4)
+        grid.addWidget(self.buttonbox, 6, 1, 1, 4)
         self.buttonbox.accepted.connect(self.run_pipeline)
         self.buttonbox.rejected.connect(self.reject)
         vbox.addLayout(grid)
@@ -122,36 +122,37 @@ class LabelsDialog(QDialog):
 
     def run_pipeline(self):
         # Get parameters
+        name = 'FBMlab_wf'
         subjects = [item.data(0) for item in
                     self.QComboBox_subject.selectedItems()]
         atlas = [item.data(0) for item in
                  self.QListWidget_atlas.selectedItems()]
         classifier_data_dir = self.classifier_data_dir
         output_path = self.output_directory
-        subject_directory = self.subject_directory
+        subjects_dir = self.subject_directory
         n_cpus = self.QSpinBox_n_cpus.value()
         cartool = self.QCheckBox_workflow.isChecked()
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         # Run workflow
+        if cartool is True:
+            workflow = generate_cartool_labelling_workflow(
+                                               name,
+                                               subjects,
+                                               atlas,
+                                               subjects_dir,
+                                               classifier_data_dir,
+                                               output_path=output_path)
+        else:
+            workflow = generate_nifti_labelling_workflow(
+                                               name,
+                                               subjects,
+                                               atlas,
+                                               subjects_dir,
+                                               classifier_data_dir,
+                                               output_path=output_path)
+        workflow.config['execution']['parameterize_dirs'] = False
+        plugin_args = {'n_procs': n_cpus}
         try:
-            if cartool is True:
-                workflow = generate_labelling_workflow(
-                                                   name,
-                                                   subjects,
-                                                   atlas,
-                                                   subjects_dir,
-                                                   classifier_data_dir,
-                                                   output_path=output_path)
-            else:
-                workflow = generate_niftii_labelling_workflow(
-                                                   name,
-                                                   subjects,
-                                                   atlas,
-                                                   subjects_dir,
-                                                   classifier_data_dir,
-                                                   output_path=output_path)
-            workflow.config['execution']['parameterize_dirs'] = False
-            plugin_args = {'n_procs': n_procs}
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             workflow.run(plugin='MultiProc', plugin_args=plugin_args)
             QApplication.restoreOverrideCursor()
             self.QMessageBox_finnish = QMessageBox()

@@ -1,0 +1,112 @@
+[
+    {
+        "group": 1,
+        "imports": [],
+        "name": "00_fs_lh",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "01_fs_rh",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "02_fs_both",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "02_fs_both"
+        ],
+        "name": "03_select_ribbon",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "04_annot_command",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "05_select_rh_gcs",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "06_select_lh_gcs",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "07_select_classifier_name",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "07_select_classifier_name"
+        ],
+        "name": "08_gen_fname",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "00_fs_lh",
+            "08_gen_fname",
+            "06_select_lh_gcs"
+        ],
+        "name": "09_ca_label_lh",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "01_fs_rh",
+            "08_gen_fname",
+            "05_select_rh_gcs"
+        ],
+        "name": "10_ca_label_rh",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "01_fs_rh",
+            "00_fs_lh",
+            "03_select_ribbon",
+            "09_ca_label_lh",
+            "10_ca_label_rh",
+            "08_gen_fname",
+            "04_annot_command"
+        ],
+        "name": "11_aparc2aseg",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "11_aparc2aseg"
+        ],
+        "name": "12_mri_greymask",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "02_fs_both",
+            "11_aparc2aseg",
+            "12_mri_greymask"
+        ],
+        "name": "13_sinker",
+        "size": 1
+    }
+]

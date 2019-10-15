@@ -30,8 +30,8 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
         lh_gcs = 'lh.' + at + '.gcs'
         rh_gcs = 'rh.' + at + '.gcs'
         annot_command = '--annot ' + at
-        lh_gcs_path = os.path.join(gcs_path, lh_gcs)
-        rh_gcs_path = os.path.join(gcs_path, rh_gcs)
+        lh_gcs_path = os.path.join(classifier_data_dir, 'classifiers', lh_gcs)
+        rh_gcs_path = os.path.join(classifier_data_dir, 'classifiers', rh_gcs)
         classifier = [at, lh_gcs_path, rh_gcs_path, annot_command]
         classifiers.append(classifier)
 
