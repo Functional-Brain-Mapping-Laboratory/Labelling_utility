@@ -19,9 +19,9 @@ def generate_fname(atlas, subject_id, subjects_dir):
 
 
 def generate_nifti_labelling_workflow(name, subjects, atlas,
-                                       subjects_dir,
-                                       classifier_data_dir,
-                                       output_path=None):
+                                      subjects_dir,
+                                      classifier_data_dir,
+                                      output_path=None):
     # Initilaze workflow
     workflow = pe.Workflow(name=name)
     # Generate Classifier inputs

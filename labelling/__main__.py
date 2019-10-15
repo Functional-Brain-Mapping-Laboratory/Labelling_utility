@@ -4,7 +4,7 @@ import os
 
 from PyQt5.QtWidgets import QApplication
 
-from .gui import LabelsDialog
+from .GUI import LabelsDialog
 from .utils import get_default_subject_dir
 
 if __name__ == '__main__':
