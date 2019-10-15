@@ -18,7 +18,6 @@ def generate_fname(atlas, subject_id, subjects_dir):
     return(lh_fname, rh_fname, label_fname)
 
 
-
 def get_output_path(output_path=None):
     if output_path is None:
         output_path = os.getcwd()
@@ -86,14 +85,12 @@ def convert_for_cartool(img, LUT):
     return (new_img_name, lut_name)
 
 
-def run_classifier_pipeline(subjects, atlas,
-                            subjects_dir,
-                            output_path=None,
-                            n_procs=8,
-                            memory_gb=8):
+def generate_cartool_labelling_workflow(name, subjects, atlas,
+                                        subjects_dir,
+                                        classifier_data_dir,
+                                        output_path=None):
     # Constant
-    script_path = os.path.dirname(os.path.realpath(__file__))
-    workflow = pe.Workflow(name='MRI_to_Cartool')
+    workflow = pe.Workflow(name=name)
     # Generate Classifier tuples
     classifiers = []
     for at in atlas:
@@ -101,9 +98,9 @@ def run_classifier_pipeline(subjects, atlas,
         rh_gcs = 'rh.' + at + '.gcs'
         lut = at + '_LUT.txt'
         annot_command = '--annot ' + at
-        lh_gcs_path = os.path.join(script_path,  'classifiers', lh_gcs)
-        rh_gcs_path = os.path.join(script_path,  'classifiers', rh_gcs)
-        lut_path = os.path.join(script_path,  'LUTs', lut)
+        lh_gcs_path = os.path.join(classifier_data_dir,  'classifiers', lh_gcs)
+        rh_gcs_path = os.path.join(classifier_data_dir,  'classifiers', rh_gcs)
+        lut_path = os.path.join(classifier_data_dir,  'LUTs', lut)
         classifier = [at, lh_gcs_path, rh_gcs_path, lut_path, annot_command]
         classifiers.append(classifier)
 
@@ -134,8 +131,12 @@ def run_classifier_pipeline(subjects, atlas,
     infosource.iterables = [('subject_id', subject_list)]
     # naming Files
     gen_fname = pe.Node(interface=Function(
-                                 input_names=['atlas', 'subject_id', 'subjects_dir'],
-                                 output_names=['lh_fname', 'rh_fname', 'label_fname'],
+                                 input_names=['atlas',
+                                              'subject_id',
+                                              'subjects_dir'],
+                                 output_names=['lh_fname',
+                                               'rh_fname',
+                                               'label_fname'],
                                  function=generate_fname),
                         name='gen_fname')
     gen_fname.inputs.subjects_dir = subjects_dir
@@ -323,10 +324,4 @@ def run_classifier_pipeline(subjects, atlas,
                      datasink, '@label')
     workflow.connect(conver2cartool, 'table_name',
                      datasink, '@table')
-
-    # Run
-    #workflow.write_graph(graph2use='exec')
-    workflow.config['execution']['parameterize_dirs'] = False
-    plugin_args = {'n_procs': n_procs, 'memory_gb': memory_gb}
-    workflow.run(plugin='MultiProc', plugin_args=plugin_args)
-    return()
+    return(workflow)

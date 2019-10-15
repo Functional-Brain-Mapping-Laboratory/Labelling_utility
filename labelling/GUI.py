@@ -8,23 +8,15 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QGridLayout, QLabel,
                              QPushButton, QErrorMessage, QMessageBox)
 from PyQt5.QtCore import Qt, pyqtSlot
 
-from pipeline import run_classifier_pipeline
-
-
-def get_default_subject_dir():
-    import os
-    env_var = os.environ
-    try:
-        subject_dir = env_var['SUBJECTS_DIR']
-    except Exception as e:
-        print(e)
-        subject_dir = os.getcwd()
-    return (subject_dir)
+from .cartool_labelling_workflow import generate_cartool_labelling_workflow
+from .nifti_labelling_workflow import generate_nifti_labelling_workflow
 
 
 class LabelsDialog(QDialog):
-    def __init__(self, parent=None, subject_directory=None, QApplication=None):
+    def __init__(self, classifier_data_dir,
+                 parent=None, subject_directory=None, QApplication=None):
         super().__init__(parent)
+        self.classifier_data_dir = classifier_data_dir
         self.setWindowTitle('Label Toolbox')
         vbox = QVBoxLayout(self)
         grid = QGridLayout()
@@ -35,7 +27,8 @@ class LabelsDialog(QDialog):
         self.QLineEdit_subject_dir.setText(subject_directory)
         grid.addWidget(self.QLineEdit_subject_dir, 0, 1)
         self.QPushButton_open_subject_dir = QPushButton('Open')
-        self.QPushButton_open_subject_dir.clicked.connect(self.open_subject_directory)
+        self.QPushButton_open_subject_dir.clicked.connect(
+                                                self.open_subject_directory)
         grid.addWidget(self.QPushButton_open_subject_dir, 0, 3)
         # subject
         grid.addWidget(QLabel('Subject:'), 1, 0)
@@ -57,7 +50,8 @@ class LabelsDialog(QDialog):
         self.QLineEdit_output_dir.setText(self.output_directory)
         grid.addWidget(self.QLineEdit_output_dir, 3, 1)
         self.QPushButton_open_output_dir = QPushButton('Open')
-        self.QPushButton_open_output_dir.clicked.connect(self.open_output_directory)
+        self.QPushButton_open_output_dir.clicked.connect(
+                                                   self.open_output_directory)
         grid.addWidget(self.QPushButton_open_output_dir, 3, 3)
         # performance
         grid.addWidget(QLabel('n_procs:'), 4, 0)
@@ -67,7 +61,13 @@ class LabelsDialog(QDialog):
         self.QSpinBox_n_cpus.setMinimum(1)
         self.QSpinBox_n_cpus.setMaximum(self.max_cpus)
         self.QSpinBox_n_cpus.setValue(self.max_cpus)
-        grid.addWidget(self.QSpinBox_n_cpus, 4, 1)
+        grid.addWidget(self.QSpinBox_n_cpus, 4, 2)
+        # Choose workflow
+        self.QCheckBox_workflow = QCheckBox()
+        self.QCheckBox_workflow.setText('Convert to cartool')
+        self.QCheckBox_workflow.setChecked(True)
+        self.cartool = True
+        grid.addWidget(self.QCheckBox_workflow, 4, 1)
         # run
         self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok |
                                           QDialogButtonBox.Cancel)
@@ -79,12 +79,13 @@ class LabelsDialog(QDialog):
     def get_subjects(self):
         "Get all subject in subject_directory"
         import os
-        self.subjects = [name for name in os.listdir(self.subject_directory) if os.path.isdir(os.path.join(self.subject_directory, name))]
+        self.subjects = [name for name in os.listdir(self.subject_directory)
+                         if os.path.isdir(os.path.join(self.subject_directory,
+                                                       name))]
         return ()
 
     def get_available_atlas(self):
-        script_path = os.path.dirname(os.path.abspath(__file__))
-        luts_dir = os.path.join(script_path, 'LUTs')
+        luts_dir = os.path.join(self.classifier_data_dir, 'LUTs')
         atlas = []
         for file in os.listdir(luts_dir):
             print(file)
@@ -92,21 +93,25 @@ class LabelsDialog(QDialog):
                 base_atlas_name = file[:-8]
                 lh_gcs = 'lh.' + base_atlas_name + '.gcs'
                 rh_gcs = 'rh.' + base_atlas_name + '.gcs'
-                lh_gcs_path = os.path.join(script_path,  'classifiers', lh_gcs)
-                rh_gcs_path = os.path.join(script_path,  'classifiers', rh_gcs)
+                lh_gcs_path = os.path.join(self.classifier_data_dir,
+                                           'classifiers', lh_gcs)
+                rh_gcs_path = os.path.join(self.classifier_data_dir,
+                                           'classifiers', rh_gcs)
                 if os.path.exists(lh_gcs_path) and os.path.exists(rh_gcs_path):
                     atlas.append(base_atlas_name)
         self.available_atlas = atlas
         return()
 
     def open_subject_directory(self):
-        self.subject_directory = QFileDialog.getExistingDirectory(self, 'OpenDir')
+        self.subject_directory = QFileDialog.getExistingDirectory(self,
+                                                                  'OpenDir')
         self.QLineEdit_subject_dir.setText(self.subject_directory)
         self.set_subjects()
         return()
 
     def open_output_directory(self):
-        self.output_directory = QFileDialog.getExistingDirectory(self, 'OpenDir')
+        self.output_directory = QFileDialog.getExistingDirectory(self,
+                                                                 'OpenDir')
         self.QLineEdit_output_dir.setText(self.output_directory)
         return()
 
@@ -116,16 +121,38 @@ class LabelsDialog(QDialog):
         self.QComboBox_subject.insertItems(0, self.subjects)
 
     def run_pipeline(self):
-        subjects = [item.data(0) for item in self.QComboBox_subject.selectedItems()]
-        atlas = [item.data(0) for item in self.QListWidget_atlas.selectedItems()]
+        # Get parameters
+        subjects = [item.data(0) for item in
+                    self.QComboBox_subject.selectedItems()]
+        atlas = [item.data(0) for item in
+                 self.QListWidget_atlas.selectedItems()]
+        classifier_data_dir = self.classifier_data_dir
         output_path = self.output_directory
         subject_directory = self.subject_directory
         n_cpus = self.QSpinBox_n_cpus.value()
+        cartool = self.QCheckBox_workflow.isChecked()
         QApplication.setOverrideCursor(Qt.WaitCursor)
+        # Run workflow
         try:
-            run_classifier_pipeline(subjects, atlas,
-                                    subject_directory, output_path,
-                                    n_procs=n_cpus)
+            if cartool is True:
+                workflow = generate_labelling_workflow(
+                                                   name,
+                                                   subjects,
+                                                   atlas,
+                                                   subjects_dir,
+                                                   classifier_data_dir,
+                                                   output_path=output_path)
+            else:
+                workflow = generate_niftii_labelling_workflow(
+                                                   name,
+                                                   subjects,
+                                                   atlas,
+                                                   subjects_dir,
+                                                   classifier_data_dir,
+                                                   output_path=output_path)
+            workflow.config['execution']['parameterize_dirs'] = False
+            plugin_args = {'n_procs': n_procs}
+            workflow.run(plugin='MultiProc', plugin_args=plugin_args)
             QApplication.restoreOverrideCursor()
             self.QMessageBox_finnish = QMessageBox()
             self.QMessageBox_finnish.setWindowTitle("Finished")
@@ -135,12 +162,3 @@ class LabelsDialog(QDialog):
             QApplication.restoreOverrideCursor()
             self.QErrorMessage = QErrorMessage()
             self.QErrorMessage.showMessage(str(e))
-
-
-if __name__ == '__main__':
-    subject_directory = get_default_subject_dir()
-    app = QApplication(sys.argv)
-    LabelsDialog = LabelsDialog(subject_directory=subject_directory,
-                                QApplication=app)
-    LabelsDialog.show()
-    sys.exit(app.exec_())

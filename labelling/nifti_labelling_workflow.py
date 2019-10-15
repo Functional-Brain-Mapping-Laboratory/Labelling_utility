@@ -18,9 +18,10 @@ def generate_fname(atlas, subject_id, subjects_dir):
     return(lh_fname, rh_fname, label_fname)
 
 
-def generate_labelling_workflow(name, subjects, atlas, gcs_path,
-                                subjects_dir,
-                                output_path=None):
+def generate_nifti_labelling_workflow(name, subjects, atlas,
+                                       subjects_dir,
+                                       classifier_data_dir,
+                                       output_path=None):
     # Initilaze workflow
     workflow = pe.Workflow(name=name)
     # Generate Classifier inputs
@@ -59,8 +60,12 @@ def generate_labelling_workflow(name, subjects, atlas, gcs_path,
 
     # Generate annotation file names
     gen_fname = pe.Node(interface=Function(
-                                 input_names=['atlas', 'subject_id', 'subjects_dir'],
-                                 output_names=['lh_fname', 'rh_fname', 'label_fname'],
+                                 input_names=['atlas',
+                                              'subject_id',
+                                              'subjects_dir'],
+                                 output_names=['lh_fname',
+                                               'rh_fname',
+                                               'label_fname'],
                                  function=generate_fname),
                         name='gen_fname')
     gen_fname.inputs.subjects_dir = subjects_dir
@@ -206,7 +211,10 @@ if __name__ == '__main__':
     subjects = ['bert', 'fsaverage']
     atlas = ['DKTatlas40', 'desikan_killiany']
     current_path = os.path.dirname(os.path.realpath(__file__))
-    atlas_path = os.path.join(current_path, 'Labelling_utility', 'labelling', 'classifiers')
+    atlas_path = os.path.join(current_path,
+                              'Labelling_utility',
+                              'labelling',
+                              'classifiers')
     subjects_dir = os.environ['SUBJECTS_DIR']
     output_path = current_path
     workflow = generate_labelling_workflow(name,
