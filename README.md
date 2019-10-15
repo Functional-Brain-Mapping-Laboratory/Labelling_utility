@@ -10,7 +10,7 @@ and Region of interest computation.
 
 ## Installation
 
-The toolbox is written in python and therefore could be run in most common platforms. However, as processing relies on Freesurfer, the toolbox can only run on LINUX/OSX plateforms.
+The toolbox is written in python and therefore could be run in most common platforms. However, as processing relies on Freesurfer, the toolbox can only run on LINUX/OSX platforms.
 For WINDOWS users, you can consider using the Windows Subsystem for Linux.
 
 ### Installing FREESURFER
