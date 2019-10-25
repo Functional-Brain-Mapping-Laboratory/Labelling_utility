@@ -88,9 +88,9 @@ class LabelsDialog(QDialog):
         luts_dir = os.path.join(self.classifier_data_dir, 'LUTs')
         atlas = []
         for file in os.listdir(luts_dir):
-            print(file)
             if file.endswith('_LUT.txt'):
                 base_atlas_name = file[:-8]
+                print(base_atlas_name)
                 lh_gcs = 'lh.' + base_atlas_name + '.gcs'
                 rh_gcs = 'rh.' + base_atlas_name + '.gcs'
                 lh_gcs_path = os.path.join(self.classifier_data_dir,
@@ -98,6 +98,7 @@ class LabelsDialog(QDialog):
                 rh_gcs_path = os.path.join(self.classifier_data_dir,
                                            'classifiers', rh_gcs)
                 if os.path.exists(lh_gcs_path) and os.path.exists(rh_gcs_path):
+                    print(base_atlas_name)
                     atlas.append(base_atlas_name)
         self.available_atlas = atlas
         return()
