@@ -13,7 +13,7 @@ and Region of interest computation.
 
 To install the toolbox, clone this repository:
 
-`git clone https://github.com/vferat/ParcEdit.git`
+`git clone https://github.com/Functional-Brain-Mapping-Laboratory/Labelling_utility.git`
 
 Then go to the repository main folder and install dependencies:
 
