@@ -8,35 +8,38 @@ Parallel processing toolbox designed to create individual brain atlases using FR
 This could outpout files either to Nifti file format or convert it to analyze (uint8) file format. Last can be use as input into [Cartool](https://sites.google.com/site/cartoolcommunity/) to perform EEG source reconstruction
 and Region of interest computation.
 
-## Installation
 
-The toolbox is written in python and therefore could be run in most common platforms. However, as processing relies on Freesurfer, the toolbox can only run on LINUX/OSX platforms.
-For WINDOWS users, you can consider using the Windows Subsystem for Linux.
+# Installation
 
-### Installing FREESURFER
- This utility relies on [Freesurfer](https://surfer.nmr.mgh.harvard.edu/) to
- create individual brain atlases. To install and setup freesurfer, please refer to
- the [freesurfer wiki](https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall)
+To install the toolbox, clone this repository:
 
- ### Installing the labelling toolbox
+`git clone https://github.com/vferat/ParcEdit.git`
 
- To install the toolbox, clone this repository:
+Then go to the repository main folder and install dependencies:
 
- `git clone https://github.com/vferat/ParcEdit.git`
+```
+cd Labelling_utility
+pip install -r requirements.txt
+```
 
- Then go to the repository main folder and install dependencies:
+If you plan to use a local freesurfer installation, please refer to
+the [freesurfer wiki](https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall)
+to learn how to setup and install  [Freesurfer](https://surfer.nmr.mgh.harvard.edu/)
 
- ```
- cd Labelling_utility
- pip install -r requirements.txt
- ```
+# Run
+The toolbox could be run either using your local FREESURFER installation, either
+using a docker image. The latest allows you to run the tooblox on OSX and WINDOWS systems.
 
 
-## Run
-
-To run the utility, simply go to the repository folder, open a terminal and type:
+## Local
+To locally run the utility, simply go to the repository folder, open a terminal and type:
 
 `python -m labelling.py`
+
+## Docker
+If you want to run the processing using the provided docker image, you can use the docker_gui interface:
+
+`python docker_gui.py`
 
 ## References
 
