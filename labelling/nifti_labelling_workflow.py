@@ -204,27 +204,3 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
     workflow.connect(mri_greymask, 'binary_file',
                      datasink, '@grey')
     return(workflow)
-
-
-if __name__ == '__main__':
-    name = 'workflow_nifti'
-    subjects = ['bert', 'fsaverage']
-    atlas = ['DKTatlas40', 'desikan_killiany']
-    current_path = os.path.dirname(os.path.realpath(__file__))
-    atlas_path = os.path.join(current_path,
-                              'Labelling_utility',
-                              'labelling',
-                              'classifiers')
-    subjects_dir = os.environ['SUBJECTS_DIR']
-    output_path = current_path
-    workflow = generate_labelling_workflow(name,
-                                           subjects,
-                                           atlas,
-                                           atlas_path,
-                                           subjects_dir,
-                                           output_path=output_path)
-    workflow.config['execution']['parameterize_dirs'] = False
-    workflow.base_dir = output_path
-    workflow.write_graph(graph2use='exec', simple_form=True)
-    plugin_args = {'n_procs': 4, 'memory_gb': 8}
-    workflow.run(plugin='MultiProc', plugin_args=plugin_args)
