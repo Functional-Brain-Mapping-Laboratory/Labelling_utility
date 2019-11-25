@@ -102,9 +102,30 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
     aparc2aseg.inputs.label_wm = False
     aparc2aseg.inputs.rip_unknown = True
 
+    mri_convert_Rois = pe.Node(interface=freesurfer.MRIConvert(),
+                               name='mri_convert_Rois')
+    mri_convert_Rois.inputs.out_orientation = 'RAS'
+    mri_convert_Rois.inputs.out_type = 'nii'
+
     mri_greymask = pe.Node(interface=freesurfer.Binarize(),
                            name='mri_greymask')
     mri_greymask.inputs.args = '--gm'
+
+    mri_convert_greymask = pe.Node(interface=freesurfer.MRIConvert(),
+                                   name='mri_convert_greymask')
+    mri_convert_greymask.inputs.out_file = 'grey_mask.nii'
+    mri_convert_greymask.inputs.out_orientation = 'RAS'
+
+    mri_convert_T1 = pe.Node(interface=freesurfer.MRIConvert(),
+                             name='mri_convert_T1')
+    mri_convert_T1.inputs.out_file = 'T1.nii'
+    mri_convert_T1.inputs.out_orientation = 'RAS'
+
+    mri_convert_brain = pe.Node(interface=freesurfer.MRIConvert(),
+                                name='mri_convert_brain')
+    mri_convert_brain.inputs.out_file = 'brain.nii'
+    mri_convert_brain.inputs.out_orientation = 'RAS'
+
 
     datasink = pe.Node(nio.DataSink(), name='sinker')
     datasink.inputs.base_directory = os.path.abspath(output_path)
@@ -192,15 +213,25 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
     # Greymask
     workflow.connect(aparc2aseg, 'out_file',
                      mri_greymask, 'in_file')
+    # Convert
+
+    workflow.connect(fs_both, 'T1',
+                     mri_convert_T1, 'in_file')
+    workflow.connect(fs_both, 'brain',
+                     mri_convert_brain, 'in_file')
+    workflow.connect(mri_greymask, 'binary_file',
+                     mri_convert_greymask, 'in_file')
+    workflow.connect(aparc2aseg, 'out_file',
+                     mri_convert_Rois, 'in_file')
     # Datasink
-    workflow.connect(infosource, "subject_id",
-                     datasink, "container")
     workflow.connect(aparc2aseg, 'out_file',
                      datasink, '@Rois')
-    workflow.connect(fs_both, 'T1',
-                     datasink, '@T1')
-    workflow.connect(fs_both, 'brain',
+    workflow.connect(mri_convert_brain, 'out_file',
                      datasink, '@brain')
-    workflow.connect(mri_greymask, 'binary_file',
-                     datasink, '@grey')
+    workflow.connect(mri_convert_greymask, 'out_file',
+                     datasink, '@greymask')
+    workflow.connect(mri_convert_Rois, 'out_file',
+                     datasink, '@label')
+    workflow.connect(mri_convert_T1, 'out_file',
+                     datasink, '@T1')
     return(workflow)
