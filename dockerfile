@@ -28,8 +28,6 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
     fi \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
 
-ENTRYPOINT ["/neurodocker/startup.sh"]
-
 ENV FREESURFER_HOME="/opt/freesurfer-6.0.0-min" \
     PATH="/opt/freesurfer-6.0.0-min/bin:$PATH"
 RUN apt-get update -qq \
@@ -74,7 +72,6 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     && bash -c "source activate neuro \
     &&   pip install --no-cache-dir  \
              'nipype' \
-             'fire'" \
     && rm -rf ~/.cache/pip/* \
     && sync
 
@@ -95,3 +92,5 @@ RUN chmod 777 /app
 
 COPY ["license.txt", "/opt/freesurfer-6.0.0-min/license.txt"]
 COPY ["./labelling", "/app/"]
+
+ENTRYPOINT ["python /app/app.py"]

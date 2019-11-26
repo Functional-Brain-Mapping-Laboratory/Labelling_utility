@@ -1,4 +1,4 @@
-import fire
+import argparse
 from cartool_labelling_workflow import generate_cartool_labelling_workflow
 from nifti_labelling_workflow import generate_nifti_labelling_workflow
 
@@ -30,5 +30,22 @@ def run_worflow(subjects, atlas, cartool=True, n_cpus=1):
     plugin_args = {'n_procs': n_cpus}
     workflow.run(plugin='MultiProc', plugin_args=plugin_args)
 
+
 if __name__ == '__main__':
-    fire.Fire(run_worflow)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--subjects', dest='subjects', action='append',
+                        help='<Required> Subjects to process',
+                        required=True)
+    parser.add_argument('-a', '--atlas', dest='atlas', action='append',
+                        help='<Required> atlas to use',
+                        required=True)
+    parser.add_argument('--cpus', dest='n_cpus',
+                        help='Number of cpus to use',
+                        required=False, type=int, default=1)
+    parser.add_argument('--cartool', dest='cartool',
+                        help='Number of cpus to use',
+                        required=False, type=bool, default=True)
+    args = parser.parse_args()
+    print(args)
+    run_worflow(args.subjects, args.atlas,
+                cartool=args.cartool, n_cpus=args.n_cpus)

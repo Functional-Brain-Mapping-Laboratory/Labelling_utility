@@ -129,9 +129,9 @@ class LabelsDialog(QDialog):
         self.QComboBox_subject.insertItems(0, self.subjects)
 
     def run_pipeline(self):
-        subjects = [item.data(0) for item in
+        subjects = ['-s ' + item.data(0) for item in
                     self.QComboBox_subject.selectedItems()]
-        atlas = [item.data(0) for item in
+        atlas = ['-a ' + item.data(0) for item in
                  self.QListWidget_atlas.selectedItems()]
         output_path = self.output_directory
         output_path = output_path.replace('\\', '/')
@@ -141,8 +141,11 @@ class LabelsDialog(QDialog):
         cartool = self.QCheckBox_workflow.isChecked()
         command = ['docker run -v',  output_path + ':' + '/mnt/output',
                    '-v ' + subjects_dir + ':' + '/mnt/subjects_dir',
-                   'vferat/labelling:first', 'python', 'app/app.py', str(subjects), str(atlas),
-                   '--n_cpus', str(n_cpus), '--cartool',  str(cartool)]
+                   'vferat/labelling:latest', 'python', 'app/app.py']
+        command.extend(subjects)
+        command.extend(atlas)
+        command.extend(['--n_cpus', str(n_cpus)])
+        command.extend(['--cartool',  str(cartool)])
         command = ' '.join(command)
         print(command)
         try:
