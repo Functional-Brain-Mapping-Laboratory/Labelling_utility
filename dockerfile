@@ -71,7 +71,7 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     && sync && conda clean --all && sync \
     && bash -c "source activate neuro \
     &&   pip install --no-cache-dir  \
-             'nipype' \
+             'nipype'" \
     && rm -rf ~/.cache/pip/* \
     && sync
 
@@ -93,4 +93,4 @@ RUN chmod 777 /app
 COPY ["license.txt", "/opt/freesurfer-6.0.0-min/license.txt"]
 COPY ["./labelling", "/app/"]
 
-ENTRYPOINT ["python /app/app.py"]
+ENTRYPOINT ["/neurodocker/startup.sh"]

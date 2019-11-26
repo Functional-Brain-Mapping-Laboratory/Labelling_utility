@@ -144,7 +144,7 @@ class LabelsDialog(QDialog):
                    'vferat/labelling:latest', 'python', 'app/app.py']
         command.extend(subjects)
         command.extend(atlas)
-        command.extend(['--n_cpus', str(n_cpus)])
+        command.extend(['--cpus', str(n_cpus)])
         command.extend(['--cartool',  str(cartool)])
         command = ' '.join(command)
         print(command)
