@@ -9,6 +9,7 @@ def run_worflow(subjects, atlas, cartool=True, n_cpus=1):
     subjects_dir = '/mnt/subjects_dir'
     working_dir = '/working_dir'
     # Run workflow
+    print(type)
     if cartool is True:
         workflow = generate_cartool_labelling_workflow(
                                            name,
@@ -17,7 +18,7 @@ def run_worflow(subjects, atlas, cartool=True, n_cpus=1):
                                            subjects_dir,
                                            classifier_data_dir,
                                            output_path=output_path)
-    else:
+    elif cartool is False:
         workflow = generate_nifti_labelling_workflow(
                                            name,
                                            subjects,
@@ -27,7 +28,8 @@ def run_worflow(subjects, atlas, cartool=True, n_cpus=1):
                                            output_path=output_path)
     workflow.config['execution']['parameterize_dirs'] = False
     workflow.base_dir = working_dir
-    plugin_args = {'n_procs': n_cpus}
+    plugin_args = {'n_procs': n_cpus,
+                   'memory_gb': 60}
     workflow.run(plugin='MultiProc', plugin_args=plugin_args)
 
 
@@ -44,7 +46,8 @@ if __name__ == '__main__':
                         required=False, type=int, default=1)
     parser.add_argument('--cartool', dest='cartool',
                         help='Number of cpus to use',
-                        required=False, type=bool, default=True)
+                        action='store_true',
+                        required=False, default=False)
     args = parser.parse_args()
     print(args)
     run_worflow(args.subjects, args.atlas,

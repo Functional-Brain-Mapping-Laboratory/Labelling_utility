@@ -145,7 +145,8 @@ class LabelsDialog(QDialog):
         command.extend(subjects)
         command.extend(atlas)
         command.extend(['--cpus', str(n_cpus)])
-        command.extend(['--cartool',  str(cartool)])
+        if cartool is True:
+            command.extend(['--cartool'])
         command = ' '.join(command)
         print(command)
         try:
