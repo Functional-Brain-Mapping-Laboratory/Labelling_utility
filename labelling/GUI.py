@@ -17,6 +17,7 @@ class LabelsDialog(QDialog):
                  parent=None, subject_directory=None, QApplication=None):
         super().__init__(parent)
         self.classifier_data_dir = classifier_data_dir
+        self.exclude = []
         self.setWindowTitle('Label Toolbox')
         vbox = QVBoxLayout(self)
         grid = QGridLayout()
@@ -43,12 +44,13 @@ class LabelsDialog(QDialog):
         self.QListWidget_atlas.insertItems(0, self.available_atlas)
         self.QListWidget_atlas.setSelectionMode(QListWidget.ExtendedSelection)
         grid.addWidget(self.QListWidget_atlas, 2, 1, 1, 3)
-        # Choose workflow
-        self.QCheckBox_workflow = QCheckBox()
-        self.QCheckBox_workflow.setText('Convert to cartool')
-        self.QCheckBox_workflow.setChecked(True)
-        self.cartool = True
-        grid.addWidget(self.QCheckBox_workflow, 3, 1)
+        # edit parc
+        grid.addWidget(QLabel('Exclude labels:'), 3, 0)
+        self.QLineEdit_exclude = QLineEdit()
+        grid.addWidget(self.QLineEdit_exclude, 3, 1)
+        self.QPushButton_exclude = QPushButton('Open')
+        self.QPushButton_exclude.clicked.connect(self.open_exclude)
+        grid.addWidget(self.QPushButton_exclude, 3, 3)
         # outputdir
         grid.addWidget(QLabel('Output directory:'), 4, 0)
         self.QLineEdit_output_dir = QLineEdit()
@@ -116,6 +118,20 @@ class LabelsDialog(QDialog):
         self.QLineEdit_output_dir.setText(self.output_directory)
         return()
 
+    def open_exclude(self):
+        filter = "txt(*.txt)"
+        fname, _ = QFileDialog.getOpenFileName(self,
+                                               'Open exclude region file',
+                                               filter=filter)
+        if fname:
+            self.fname_exclude = fname
+            self.QLineEdit_exclude.setText(self.fname_exclude)
+            with open(self.fname_exclude) as f:
+                content = f.readlines()
+            content = [c.strip() for c in content]
+            self.exclude = content
+        return()
+
     def set_subjects(self):
         self.get_subjects()
         self.QComboBox_subject.clear()
@@ -128,28 +144,19 @@ class LabelsDialog(QDialog):
                     self.QComboBox_subject.selectedItems()]
         atlas = [item.data(0) for item in
                  self.QListWidget_atlas.selectedItems()]
+        exclude = self.exclude
         classifier_data_dir = self.classifier_data_dir
         output_path = self.output_directory
         subjects_dir = self.subject_directory
         n_cpus = self.QSpinBox_n_cpus.value()
-        cartool = self.QCheckBox_workflow.isChecked()
-        # Run workflow
-        if cartool is True:
-            workflow = generate_cartool_labelling_workflow(
-                                               name,
-                                               subjects,
-                                               atlas,
-                                               subjects_dir,
-                                               classifier_data_dir,
-                                               output_path=output_path)
-        else:
-            workflow = generate_nifti_labelling_workflow(
-                                               name,
-                                               subjects,
-                                               atlas,
-                                               subjects_dir,
-                                               classifier_data_dir,
-                                               output_path=output_path)
+        workflow = generate_nifti_labelling_workflow(
+                                           name,
+                                           subjects,
+                                           atlas,
+                                           subjects_dir,
+                                           classifier_data_dir,
+                                           exclude=exclude,
+                                           output_path=output_path)
         workflow.config['execution']['parameterize_dirs'] = False
         plugin_args = {'n_procs': n_cpus}
         try:

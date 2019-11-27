@@ -18,21 +18,47 @@ def generate_fname(atlas, subject_id, subjects_dir):
     return(lh_fname, rh_fname, label_fname)
 
 
+def edit_parc(mri, exclude, lut):
+    import os
+    import nibabel as nib
+    import numpy as np
+    # Create output filename
+    fname_edit = os.path.splitext(mri)[0] + "_edit.nii"
+    # open lut
+    dtype = [('id', '<i8'), ('name', 'U47'),
+             ('R', '<i8'), ('G', '<i8'), ('B', '<i8'), ('A', '<i8')]
+    data_lut = np.genfromtxt(lut, dtype=dtype)
+    # open mri
+    mri_img = nib.load(mri)
+    mri_data = mri_img.get_data()
+    # Get exclude indices
+    exclude_indices = [data_lut['id'][p] for p in range(0, len(data_lut['id'])) if data_lut['name'][p] in exclude]
+    # Set exclude rosi to 0 (unknown)
+    for i in exclude_indices:
+        mri_data = np.where(mri_data != i, mri_data, 0)
+    img = nib.Nifti1Image(mri_data.astype('uint16'), mri_img.affine)
+    img.to_filename(fname_edit)
+    return(fname_edit)
+
+
 def generate_nifti_labelling_workflow(name, subjects, atlas,
                                       subjects_dir,
                                       classifier_data_dir,
+                                      exclude=[],
                                       output_path=None):
-    # Initilaze workflow
+    # Constant
     workflow = pe.Workflow(name=name)
-    # Generate Classifier inputs
+    # Generate Classifier tuples
     classifiers = []
     for at in atlas:
         lh_gcs = 'lh.' + at + '.gcs'
         rh_gcs = 'rh.' + at + '.gcs'
+        lut = at + '_LUT.txt'
         annot_command = '--annot ' + at
-        lh_gcs_path = os.path.join(classifier_data_dir, 'classifiers', lh_gcs)
-        rh_gcs_path = os.path.join(classifier_data_dir, 'classifiers', rh_gcs)
-        classifier = [at, lh_gcs_path, rh_gcs_path, annot_command]
+        lh_gcs_path = os.path.join(classifier_data_dir,  'classifiers', lh_gcs)
+        rh_gcs_path = os.path.join(classifier_data_dir,  'classifiers', rh_gcs)
+        lut_path = os.path.join(classifier_data_dir,  'LUTs', lut)
+        classifier = [at, lh_gcs_path, rh_gcs_path, lut_path, annot_command]
         classifiers.append(classifier)
 
     classifiersource = pe.Node(util.IdentityInterface(fields=['classifier']),
@@ -49,8 +75,11 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
     select_rh_gcs = pe.Node(interface=util.Select(), name='select_rh_gcs')
     select_rh_gcs.inputs.index = [2]
 
+    select_lut = pe.Node(interface=util.Select(), name='select_lut')
+    select_lut.inputs.index = [3]
+
     annot_command = pe.Node(interface=util.Select(), name='annot_command')
-    annot_command.inputs.index = [3]
+    annot_command.inputs.index = [4]
 
     # Iterate over subjects
     subject_list = list(subjects)
@@ -102,10 +131,22 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
     aparc2aseg.inputs.label_wm = False
     aparc2aseg.inputs.rip_unknown = True
 
+    edit = pe.Node(interface=Function(
+                                 input_names=['mri', 'exclude', 'lut'],
+                                 output_names=['fname_edit'],
+                                 function=edit_parc),
+                         name='edit')
+    edit.inputs.exclude = exclude
+
     mri_convert_Rois = pe.Node(interface=freesurfer.MRIConvert(),
                                name='mri_convert_Rois')
     mri_convert_Rois.inputs.out_orientation = 'RAS'
     mri_convert_Rois.inputs.out_type = 'nii'
+
+    mri_convert_edit = pe.Node(interface=freesurfer.MRIConvert(),
+                               name='mri_convert_edit')
+    mri_convert_edit.inputs.out_orientation = 'RAS'
+    mri_convert_edit.inputs.out_type = 'nii'
 
     mri_greymask = pe.Node(interface=freesurfer.Binarize(),
                            name='mri_greymask')
@@ -140,6 +181,8 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                      select_rh_gcs, 'inlist')
     workflow.connect(classifiersource, 'classifier',
                      annot_command, 'inlist')
+    workflow.connect(classifiersource, 'classifier',
+                     select_lut, 'inlist')
     # Iterate over subjects
     workflow.connect(infosource, 'subject_id',
                      fs_both, 'subject_id')
@@ -210,11 +253,15 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                      aparc2aseg, 'rh_annotation')
     workflow.connect(gen_fname, 'label_fname',
                      aparc2aseg, 'out_file')
+    # Edit parc
+    workflow.connect(aparc2aseg, 'out_file',
+                     edit, 'mri')
+    workflow.connect(select_lut, 'out',
+                     edit, 'lut')
     # Greymask
     workflow.connect(aparc2aseg, 'out_file',
                      mri_greymask, 'in_file')
     # Convert
-
     workflow.connect(fs_both, 'T1',
                      mri_convert_T1, 'in_file')
     workflow.connect(fs_both, 'brain',
@@ -223,6 +270,8 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                      mri_convert_greymask, 'in_file')
     workflow.connect(aparc2aseg, 'out_file',
                      mri_convert_Rois, 'in_file')
+    workflow.connect(edit, 'fname_edit',
+                     mri_convert_edit, 'in_file')
     # Datasink
     workflow.connect(aparc2aseg, 'out_file',
                      datasink, '@Rois')
@@ -234,4 +283,6 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                      datasink, '@label')
     workflow.connect(mri_convert_T1, 'out_file',
                      datasink, '@T1')
+    workflow.connect(mri_convert_edit, 'out_file',
+                     datasink, '@edit')
     return(workflow)

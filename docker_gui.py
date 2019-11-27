@@ -16,6 +16,7 @@ class LabelsDialog(QDialog):
     def __init__(self,
                  parent=None, subject_directory=None, QApplication=None):
         super().__init__(parent)
+        self.exclude = []
         self.setWindowTitle('Label Toolbox')
         vbox = QVBoxLayout(self)
         grid = QGridLayout()
@@ -42,12 +43,13 @@ class LabelsDialog(QDialog):
         self.QListWidget_atlas.insertItems(0, self.available_atlas)
         self.QListWidget_atlas.setSelectionMode(QListWidget.ExtendedSelection)
         grid.addWidget(self.QListWidget_atlas, 2, 1, 1, 3)
-        # Choose workflow
-        self.QCheckBox_workflow = QCheckBox()
-        self.QCheckBox_workflow.setText('Convert to cartool')
-        self.QCheckBox_workflow.setChecked(True)
-        self.cartool = True
-        grid.addWidget(self.QCheckBox_workflow, 3, 1)
+        # edit parc
+        grid.addWidget(QLabel('Exclude labels:'), 3, 0)
+        self.QLineEdit_exclude = QLineEdit()
+        grid.addWidget(self.QLineEdit_exclude, 3, 1)
+        self.QPushButton_exclude = QPushButton('Open')
+        self.QPushButton_exclude.clicked.connect(self.open_exclude)
+        grid.addWidget(self.QPushButton_exclude, 3, 3)
         # outputdir
         grid.addWidget(QLabel('Output directory:'), 4, 0)
         self.QLineEdit_output_dir = QLineEdit()
@@ -133,6 +135,7 @@ class LabelsDialog(QDialog):
                     self.QComboBox_subject.selectedItems()]
         atlas = ['-a ' + item.data(0) for item in
                  self.QListWidget_atlas.selectedItems()]
+        exclude = ['-e ' + e for e in self.exclude]
         output_path = self.output_directory
         output_path = output_path.replace('\\', '/')
         subjects_dir = self.subject_directory
@@ -144,9 +147,8 @@ class LabelsDialog(QDialog):
                    'vferat/labelling:latest', 'python', 'app/app.py']
         command.extend(subjects)
         command.extend(atlas)
+        command.extend(exclude)
         command.extend(['--cpus', str(n_cpus)])
-        if cartool is True:
-            command.extend(['--cartool'])
         command = ' '.join(command)
         print(command)
         try:
@@ -161,6 +163,7 @@ class LabelsDialog(QDialog):
             QApplication.restoreOverrideCursor()
             self.QErrorMessage = QErrorMessage()
             self.QErrorMessage.showMessage(str(e))
+
 
 if __name__ == '__main__':
     subject_directory = os.getcwd()
