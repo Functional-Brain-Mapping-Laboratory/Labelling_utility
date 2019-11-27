@@ -125,6 +125,20 @@ class LabelsDialog(QDialog):
         self.QLineEdit_output_dir.setText(self.output_directory)
         return()
 
+    def open_exclude(self):
+        filter = "txt(*.txt)"
+        fname, _ = QFileDialog.getOpenFileName(self,
+                                               'Open exclude region file',
+                                               filter=filter)
+        if fname:
+            self.fname_exclude = fname
+            self.QLineEdit_exclude.setText(self.fname_exclude)
+            with open(self.fname_exclude) as f:
+                content = f.readlines()
+            content = [c.strip() for c in content]
+            self.exclude = content
+        return()
+
     def set_subjects(self):
         self.get_subjects()
         self.QComboBox_subject.clear()
@@ -141,10 +155,9 @@ class LabelsDialog(QDialog):
         subjects_dir = self.subject_directory
         subjects_dir = subjects_dir.replace('\\', '/')
         n_cpus = self.QSpinBox_n_cpus.value()
-        cartool = self.QCheckBox_workflow.isChecked()
         command = ['docker run -v',  output_path + ':' + '/mnt/output',
                    '-v ' + subjects_dir + ':' + '/mnt/subjects_dir',
-                   'vferat/labelling:latest', 'python', 'app/app.py']
+                   'vferat/labelling:dev', 'python', 'app/app.py']
         command.extend(subjects)
         command.extend(atlas)
         command.extend(exclude)
