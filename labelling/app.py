@@ -15,6 +15,7 @@ def run_worflow(subjects, atlas, exclude=[], n_cpus=1):
                                        atlas,
                                        subjects_dir,
                                        classifier_data_dir,
+                                       exclude=exclude,
                                        output_path=output_path)
     workflow.config['execution']['parameterize_dirs'] = False
     workflow.base_dir = working_dir
