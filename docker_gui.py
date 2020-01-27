@@ -158,7 +158,7 @@ class LabelsDialog(QDialog):
         n_cpus = self.QSpinBox_n_cpus.value()
         command = ['docker run -v',  output_path + ':' + '/mnt/output',
                    '-v ' + subjects_dir + ':' + '/mnt/subjects_dir',
-                   'test', 'python', 'app/app.py']
+                   'vferat/labelling:dev', 'python', 'app/app.py']
         command.extend(subjects)
         command.extend(atlas)
         command.extend(exclude)
