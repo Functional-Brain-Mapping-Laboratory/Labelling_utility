@@ -63,7 +63,6 @@ class LabelsDialog(QDialog):
         grid.addWidget(self.QPushButton_open_output_dir, 4, 3)
         # performance
         grid.addWidget(QLabel('n_procs:'), 5, 0)
-        self.QLineEdit_output_dir = QLineEdit()
         self.max_cpus = os.cpu_count()
         self.QSpinBox_n_cpus = QSpinBox()
         self.QSpinBox_n_cpus.setMinimum(1)
@@ -129,6 +128,7 @@ class LabelsDialog(QDialog):
             with open(self.fname_exclude) as f:
                 content = f.readlines()
             content = [c.strip() for c in content]
+            print(content)
             self.exclude = content
         return()
 

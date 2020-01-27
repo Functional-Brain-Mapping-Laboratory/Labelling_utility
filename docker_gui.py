@@ -62,7 +62,6 @@ class LabelsDialog(QDialog):
         grid.addWidget(self.QPushButton_open_output_dir, 4, 3)
         # performance
         grid.addWidget(QLabel('n_procs:'), 5, 0)
-        self.QLineEdit_output_dir = QLineEdit()
         self.max_cpus = os.cpu_count()
         self.QSpinBox_n_cpus = QSpinBox()
         self.QSpinBox_n_cpus.setMinimum(1)
@@ -109,7 +108,8 @@ class LabelsDialog(QDialog):
                                 'Schaefer2018_1000Parcels_7Networks',
                                 'Schaefer2018_1000Parcels_17Networks',
                                 'Yeo2011_7Networks',
-                                'Yeo2011_17Networks']
+                                'Yeo2011_17Networks',
+                                'BN_Atlas']
         return()
 
     def open_subject_directory(self):
@@ -122,6 +122,7 @@ class LabelsDialog(QDialog):
     def open_output_directory(self):
         self.output_directory = QFileDialog.getExistingDirectory(self,
                                                                  'OpenDir')
+        print(self.output_directory)
         self.QLineEdit_output_dir.setText(self.output_directory)
         return()
 
@@ -157,7 +158,7 @@ class LabelsDialog(QDialog):
         n_cpus = self.QSpinBox_n_cpus.value()
         command = ['docker run -v',  output_path + ':' + '/mnt/output',
                    '-v ' + subjects_dir + ':' + '/mnt/subjects_dir',
-                   'vferat/labelling:dev', 'python', 'app/app.py']
+                   'test', 'python', 'app/app.py']
         command.extend(subjects)
         command.extend(atlas)
         command.extend(exclude)

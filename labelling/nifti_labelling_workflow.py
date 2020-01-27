@@ -33,6 +33,7 @@ def edit_parc(mri, exclude, lut):
     mri_data = mri_img.get_data()
     # Get exclude indices
     exclude_indices = [data_lut['id'][p] for p in range(0, len(data_lut['id'])) if data_lut['name'][p] in exclude]
+    print(exclude_indices)
     # Set exclude rosi to 0 (unknown)
     for i in exclude_indices:
         mri_data = np.where(mri_data != i, mri_data, 0)
@@ -273,8 +274,6 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
     workflow.connect(edit, 'fname_edit',
                      mri_convert_edit, 'in_file')
     # Datasink
-    workflow.connect(aparc2aseg, 'out_file',
-                     datasink, '@Rois')
     workflow.connect(mri_convert_brain, 'out_file',
                      datasink, '@brain')
     workflow.connect(mri_convert_greymask, 'out_file',
