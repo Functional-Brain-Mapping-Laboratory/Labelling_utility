@@ -150,8 +150,7 @@ class LabelsDialog(QDialog):
                     self.QComboBox_subject.selectedItems()]
         atlas = ['-a ' + item.data(0) for item in
                  self.QListWidget_atlas.selectedItems()]
-        exclude = ['-e None']
-        exclude.extend(['-e ' + e for e in self.exclude])
+        exclude = ['-e ' + e for e in self.exclude]
         output_path = self.output_directory
         output_path = output_path.replace('\\', '/')
         subjects_dir = self.subject_directory
