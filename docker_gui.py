@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QApplication
 
 
 class LabelsDialog(QDialog):
-    def __init__(self,
+    def __init__(self, exclude_file=None,
                  parent=None, subject_directory=None, QApplication=None):
         super().__init__(parent)
         self.exclude = []
@@ -45,7 +45,11 @@ class LabelsDialog(QDialog):
         grid.addWidget(self.QListWidget_atlas, 2, 1, 1, 3)
         # edit parc
         grid.addWidget(QLabel('Exclude labels:'), 3, 0)
+        self.exclude_file = exclude_file
         self.QLineEdit_exclude = QLineEdit()
+        if exclude_file is not None:
+            self.load_exclude(exclude_file)
+        self.QLineEdit_exclude.setText(self.exclude_file)
         grid.addWidget(self.QLineEdit_exclude, 3, 1)
         self.QPushButton_exclude = QPushButton('Open')
         self.QPushButton_exclude.clicked.connect(self.open_exclude)
@@ -132,13 +136,16 @@ class LabelsDialog(QDialog):
                                                'Open exclude region file',
                                                filter=filter)
         if fname:
-            self.fname_exclude = fname
-            self.QLineEdit_exclude.setText(self.fname_exclude)
-            with open(self.fname_exclude) as f:
-                content = f.readlines()
-            content = [c.strip() for c in content]
-            self.exclude = content
+            self.load_exclude(fname)
         return()
+
+    def load_exclude(self, fname):
+        self.exclude_file = fname
+        self.QLineEdit_exclude.setText(self.exclude_file)
+        with open(self.exclude_file) as f:
+            content = f.readlines()
+        content = [c.strip() for c in content]
+        self.exclude = content
 
     def set_subjects(self):
         self.get_subjects()
@@ -182,8 +189,11 @@ class LabelsDialog(QDialog):
 
 if __name__ == '__main__':
     subject_directory = os.getcwd()
+    exclude_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                'labelling', 'exclude.txt')
     app = QApplication(sys.argv)
     LabelsDialog = LabelsDialog(subject_directory=subject_directory,
+                                exclude_file=exclude_file,
                                 QApplication=app)
     LabelsDialog.show()
     sys.exit(app.exec_())

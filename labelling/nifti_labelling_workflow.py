@@ -33,7 +33,6 @@ def edit_parc(mri, exclude, lut):
     mri_data = mri_img.get_data()
     # Get exclude indices
     exclude_indices = [data_lut['id'][p] for p in range(0, len(data_lut['id'])) if data_lut['name'][p] in exclude]
-    print(exclude_indices)
     # Set exclude rosi to 0 (unknown)
     for i in exclude_indices:
         mri_data = np.where(mri_data != i, mri_data, 0)

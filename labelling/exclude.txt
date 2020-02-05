@@ -1,0 +1,7 @@
+Unknown
+Left-Cerebral-White-Matter
+Left-Cerebellum-White-Matter
+Right-Cerebral-White-Matter
+Right-Cerebellum-White-Matter
+WM-hypointensities
+Optic-Chiasm

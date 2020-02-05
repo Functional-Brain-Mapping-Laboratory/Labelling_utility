@@ -10,12 +10,11 @@ from .utils import get_default_subject_dir
 if __name__ == '__main__':
     subject_directory = get_default_subject_dir()
     classifier_data_dir = os.path.dirname(os.path.abspath(__file__))
-    modern = False
+    exclude_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                'exclude.txt')
     app = QApplication(sys.argv)
-    if modern is True:
-        import qtmodern.styles
-        qtmodern.styles.dark(app)
     LabelsDialog = LabelsDialog(classifier_data_dir,
+                                exclude_file=exclude_file,
                                 subject_directory=subject_directory,
                                 QApplication=app)
     LabelsDialog.show()

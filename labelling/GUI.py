@@ -14,7 +14,8 @@ from .nifti_labelling_workflow import generate_nifti_labelling_workflow
 
 class LabelsDialog(QDialog):
     def __init__(self, classifier_data_dir,
-                 parent=None, subject_directory=None, QApplication=None):
+                 parent=None, subject_directory=None,
+                 exclude_file=None, QApplication=None):
         super().__init__(parent)
         self.classifier_data_dir = classifier_data_dir
         self.exclude = []
@@ -46,7 +47,11 @@ class LabelsDialog(QDialog):
         grid.addWidget(self.QListWidget_atlas, 2, 1, 1, 3)
         # edit parc
         grid.addWidget(QLabel('Exclude labels:'), 3, 0)
+        self.exclude_file = exclude_file
         self.QLineEdit_exclude = QLineEdit()
+        if exclude_file is not None:
+            self.load_exclude(exclude_file)
+        self.QLineEdit_exclude.setText(self.exclude_file)
         grid.addWidget(self.QLineEdit_exclude, 3, 1)
         self.QPushButton_exclude = QPushButton('Open')
         self.QPushButton_exclude.clicked.connect(self.open_exclude)
@@ -91,7 +96,6 @@ class LabelsDialog(QDialog):
         for file in os.listdir(luts_dir):
             if file.endswith('_LUT.txt'):
                 base_atlas_name = file[:-8]
-                print(base_atlas_name)
                 lh_gcs = 'lh.' + base_atlas_name + '.gcs'
                 rh_gcs = 'rh.' + base_atlas_name + '.gcs'
                 lh_gcs_path = os.path.join(self.classifier_data_dir,
@@ -99,7 +103,6 @@ class LabelsDialog(QDialog):
                 rh_gcs_path = os.path.join(self.classifier_data_dir,
                                            'classifiers', rh_gcs)
                 if os.path.exists(lh_gcs_path) and os.path.exists(rh_gcs_path):
-                    print(base_atlas_name)
                     atlas.append(base_atlas_name)
         self.available_atlas = atlas
         return()
@@ -123,14 +126,17 @@ class LabelsDialog(QDialog):
                                                'Open exclude region file',
                                                filter=filter)
         if fname:
-            self.fname_exclude = fname
-            self.QLineEdit_exclude.setText(self.fname_exclude)
-            with open(self.fname_exclude) as f:
-                content = f.readlines()
-            content = [c.strip() for c in content]
-            print(content)
-            self.exclude = content
+            self.load_exclude(fname)
         return()
+
+    def load_exclude(self, fname):
+        self.exclude_file = fname
+        self.QLineEdit_exclude.setText(self.exclude_file)
+        with open(self.exclude_file) as f:
+            content = f.readlines()
+        content = [c.strip() for c in content]
+        self.exclude = content
+
 
     def set_subjects(self):
         self.get_subjects()
