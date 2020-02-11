@@ -22,24 +22,9 @@ cd Labelling_utility
 pip install -r requirements.txt
 ```
 
-If you plan to use a local freesurfer installation, please refer to
-the [freesurfer wiki](https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall)
-to learn how to setup and install  [Freesurfer](https://surfer.nmr.mgh.harvard.edu/)
-
 # Run
-The toolbox could be run either using your local FREESURFER installation, either
-using a docker image. The latest allows you to run the tooblox on OSX and WINDOWS systems.
 
-
-## Local
-To locally run the utility, simply go to the repository folder, open a terminal and type:
-
-`python -m labelling.py`
-
-## Docker
-If you want to run the processing using the provided docker image, you can use the docker_gui interface:
-
-`python docker_gui.py`
+`python -m labelling`
 
 ## References
 

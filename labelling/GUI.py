@@ -1,6 +1,7 @@
-
 import sys
 import os
+import subprocess
+from pathlib import Path, PurePosixPath
 
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QGridLayout, QLabel,
                              QSpinBox, QComboBox, QDialogButtonBox, QCheckBox,
@@ -8,16 +9,13 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QGridLayout, QLabel,
                              QPushButton, QErrorMessage, QMessageBox)
 from PyQt5.QtCore import Qt, pyqtSlot
 
-from .cartool_labelling_workflow import generate_cartool_labelling_workflow
-from .nifti_labelling_workflow import generate_nifti_labelling_workflow
+from PyQt5.QtWidgets import QApplication
 
 
 class LabelsDialog(QDialog):
-    def __init__(self, classifier_data_dir,
-                 parent=None, subject_directory=None,
-                 exclude_file=None, QApplication=None):
+    def __init__(self, exclude_file=None,
+                 parent=None, subject_directory=None, QApplication=None):
         super().__init__(parent)
-        self.classifier_data_dir = classifier_data_dir
         self.exclude = []
         self.setWindowTitle('Label Toolbox')
         vbox = QVBoxLayout(self)
@@ -91,20 +89,30 @@ class LabelsDialog(QDialog):
         return ()
 
     def get_available_atlas(self):
-        luts_dir = os.path.join(self.classifier_data_dir, 'LUTs')
-        atlas = []
-        for file in os.listdir(luts_dir):
-            if file.endswith('_LUT.txt'):
-                base_atlas_name = file[:-8]
-                lh_gcs = 'lh.' + base_atlas_name + '.gcs'
-                rh_gcs = 'rh.' + base_atlas_name + '.gcs'
-                lh_gcs_path = os.path.join(self.classifier_data_dir,
-                                           'classifiers', lh_gcs)
-                rh_gcs_path = os.path.join(self.classifier_data_dir,
-                                           'classifiers', rh_gcs)
-                if os.path.exists(lh_gcs_path) and os.path.exists(rh_gcs_path):
-                    atlas.append(base_atlas_name)
-        self.available_atlas = atlas
+        self.available_atlas = ['desikan_killiany',
+                                'DKTatlas40',
+                                'Schaefer2018_100Parcels_7Networks',
+                                'Schaefer2018_100Parcels_17Networks',
+                                'Schaefer2018_200Parcels_7Networks',
+                                'Schaefer2018_200Parcels_17Networks',
+                                'Schaefer2018_300Parcels_7Networks',
+                                'Schaefer2018_300Parcels_17Networks',
+                                'Schaefer2018_400Parcels_7Networks',
+                                'Schaefer2018_400Parcels_17Networks',
+                                'Schaefer2018_500Parcels_7Networks',
+                                'Schaefer2018_500Parcels_17Networks',
+                                'Schaefer2018_600Parcels_7Networks',
+                                'Schaefer2018_600Parcels_17Networks',
+                                'Schaefer2018_700Parcels_7Networks',
+                                'Schaefer2018_700Parcels_17Networks',
+                                'Schaefer2018_800Parcels_7Networks',
+                                'Schaefer2018_800Parcels_17Networks',
+                                'Schaefer2018_900Parcels_7Networks',
+                                'Schaefer2018_900Parcels_17Networks',
+                                'Schaefer2018_1000Parcels_7Networks',
+                                'Schaefer2018_1000Parcels_17Networks',
+                                'Yeo2011_7Networks',
+                                'Yeo2011_17Networks']
         return()
 
     def open_subject_directory(self):
@@ -117,6 +125,7 @@ class LabelsDialog(QDialog):
     def open_output_directory(self):
         self.output_directory = QFileDialog.getExistingDirectory(self,
                                                                  'OpenDir')
+        print(self.output_directory)
         self.QLineEdit_output_dir.setText(self.output_directory)
         return()
 
@@ -137,37 +146,35 @@ class LabelsDialog(QDialog):
         content = [c.strip() for c in content]
         self.exclude = content
 
-
     def set_subjects(self):
         self.get_subjects()
         self.QComboBox_subject.clear()
         self.QComboBox_subject.insertItems(0, self.subjects)
 
     def run_pipeline(self):
-        # Get parameters
-        name = 'FBMlab_wf'
-        subjects = [item.data(0) for item in
+        subjects = ['-s ' + item.data(0) for item in
                     self.QComboBox_subject.selectedItems()]
-        atlas = [item.data(0) for item in
+        atlas = ['-a ' + item.data(0) for item in
                  self.QListWidget_atlas.selectedItems()]
-        exclude = self.exclude
-        classifier_data_dir = self.classifier_data_dir
+        exclude = ['-e None']
+        exclude.extend(['-e ' + e for e in self.exclude])
         output_path = self.output_directory
+        output_path = output_path.replace('\\', '/')
         subjects_dir = self.subject_directory
+        subjects_dir = subjects_dir.replace('\\', '/')
         n_cpus = self.QSpinBox_n_cpus.value()
-        workflow = generate_nifti_labelling_workflow(
-                                           name,
-                                           subjects,
-                                           atlas,
-                                           subjects_dir,
-                                           classifier_data_dir,
-                                           exclude=exclude,
-                                           output_path=output_path)
-        workflow.config['execution']['parameterize_dirs'] = False
-        plugin_args = {'n_procs': n_cpus}
+        command = ['docker run -v',  output_path + ':' + '/mnt/output',
+                   '-v ' + subjects_dir + ':' + '/mnt/subjects_dir',
+                   'test:latest', 'python', 'app/app.py']
+        command.extend(subjects)
+        command.extend(atlas)
+        command.extend(exclude)
+        command.extend(['--cpus', str(n_cpus)])
+        command = ' '.join(command)
+        print(command)
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            workflow.run(plugin='MultiProc', plugin_args=plugin_args)
+            subprocess.run(command, check=True, shell=True)
             QApplication.restoreOverrideCursor()
             self.QMessageBox_finnish = QMessageBox()
             self.QMessageBox_finnish.setWindowTitle("Finished")

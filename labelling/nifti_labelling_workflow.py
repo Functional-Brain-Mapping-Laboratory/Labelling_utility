@@ -135,7 +135,7 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                                  input_names=['mri', 'exclude', 'lut'],
                                  output_names=['fname_edit'],
                                  function=edit_parc),
-                         name='edit')
+                   name='edit')
     edit.inputs.exclude = exclude
 
     mri_convert_Rois = pe.Node(interface=freesurfer.MRIConvert(),
@@ -156,6 +156,18 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                                    name='mri_convert_greymask')
     mri_convert_greymask.inputs.out_file = 'grey_mask.nii'
     mri_convert_greymask.inputs.out_orientation = 'RAS'
+    mri_convert_greymask.inputs.out_datatype = 'uchar'
+
+    mri_greymask_edit = pe.Node(interface=freesurfer.Binarize(),
+                           name='mri_greymask_edit')
+    mri_greymask_edit.inputs.args = '--gm'
+
+    mri_convert_greymask_edit = pe.Node(interface=freesurfer.MRIConvert(),
+                                   name='mri_convert_greymask_edit')
+    mri_convert_greymask_edit.inputs.out_file = 'grey_mask_edit.nii'
+    mri_convert_greymask_edit.inputs.out_orientation = 'RAS'
+    mri_convert_greymask_edit.inputs.out_datatype = 'uchar'
+
 
     mri_convert_T1 = pe.Node(interface=freesurfer.MRIConvert(),
                              name='mri_convert_T1')
@@ -166,7 +178,6 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                                 name='mri_convert_brain')
     mri_convert_brain.inputs.out_file = 'brain.nii'
     mri_convert_brain.inputs.out_orientation = 'RAS'
-
 
     datasink = pe.Node(nio.DataSink(), name='sinker')
     datasink.inputs.base_directory = os.path.abspath(output_path)
@@ -261,6 +272,8 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
     # Greymask
     workflow.connect(aparc2aseg, 'out_file',
                      mri_greymask, 'in_file')
+    workflow.connect(edit, 'fname_edit',
+                     mri_greymask_edit, 'in_file')
     # Convert
     workflow.connect(fs_both, 'T1',
                      mri_convert_T1, 'in_file')
@@ -268,6 +281,8 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                      mri_convert_brain, 'in_file')
     workflow.connect(mri_greymask, 'binary_file',
                      mri_convert_greymask, 'in_file')
+    workflow.connect(mri_greymask_edit, 'binary_file',
+                     mri_convert_greymask_edit, 'in_file')
     workflow.connect(aparc2aseg, 'out_file',
                      mri_convert_Rois, 'in_file')
     workflow.connect(edit, 'fname_edit',
@@ -283,4 +298,6 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                      datasink, '@T1')
     workflow.connect(mri_convert_edit, 'out_file',
                      datasink, '@edit')
+    workflow.connect(mri_convert_greymask_edit, 'out_file',
+                     datasink, '@greymask_edit')
     return(workflow)
