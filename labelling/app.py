@@ -19,8 +19,7 @@ def run_worflow(subjects, atlas, exclude=[], n_cpus=1):
                                        output_path=output_path)
     workflow.config['execution']['parameterize_dirs'] = False
     workflow.base_dir = working_dir
-    plugin_args = {'n_procs': n_cpus,
-                   'memory_gb': 60}
+    plugin_args = {'n_procs': n_cpus}
     workflow.run(plugin='MultiProc', plugin_args=plugin_args)
 
 
