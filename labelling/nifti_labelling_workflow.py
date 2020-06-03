@@ -17,6 +17,13 @@ def generate_fname(atlas, subject_id, subjects_dir):
     label_fname = subject_id + '_' + atlas + '.nii'
     return(lh_fname, rh_fname, label_fname)
 
+def save_exclude(exclude):
+    import os
+    with open('exclude.txt', 'w')as f:
+        for ex in exclude:
+            f.write(ex)
+            f.write('\n')
+    return(os.path.join(os.getcwd(), 'exclude.txt'))
 
 def edit_parc(mri, exclude, lut):
     import os
@@ -131,6 +138,13 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
     aparc2aseg.inputs.label_wm = False
     aparc2aseg.inputs.rip_unknown = True
 
+    save_excl = pe.Node(interface=Function(
+                                 input_names=['exclude'],
+                                 output_names=['fname_exclude'],
+                                 function=save_exclude),
+                   name='save_excl')
+    save_excl.inputs.exclude = exclude
+    
     edit = pe.Node(interface=Function(
                                  input_names=['mri', 'exclude', 'lut'],
                                  output_names=['fname_edit'],
@@ -300,4 +314,8 @@ def generate_nifti_labelling_workflow(name, subjects, atlas,
                      datasink, '@edit')
     workflow.connect(mri_convert_greymask_edit, 'out_file',
                      datasink, '@greymask_edit')
+    workflow.connect(select_lut, 'out',
+                     datasink, '@lut')  
+    workflow.connect(save_excl, 'fname_exclude',
+                     datasink, '@exclude')   
     return(workflow)
